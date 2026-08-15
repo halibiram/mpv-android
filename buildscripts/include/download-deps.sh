@@ -56,11 +56,7 @@ if [ ! -d libxml2 ]; then
 fi
 
 # fontconfig
-if [ ! -d fontconfig ]; then
-	mkdir fontconfig
-	$WGET https://gitlab.freedesktop.org/fontconfig/fontconfig/-/archive/${v_fontconfig}/fontconfig-${v_fontconfig}.tar.gz -O - | \
-		tar -xz -C fontconfig --strip-components=1
-fi
+[ ! -d fontconfig ] && git clone --depth 1 --branch ${v_fontconfig} https://gitlab.freedesktop.org/fontconfig/fontconfig.git fontconfig
 
 # libass
 [ ! -d libass ] && git clone https://github.com/libass/libass
