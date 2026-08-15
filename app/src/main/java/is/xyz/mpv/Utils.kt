@@ -31,7 +31,7 @@ import kotlin.math.abs
 import kotlin.math.ceil
 import kotlin.math.roundToInt
 
-internal object Utils {
+object Utils {
     private fun copyAssetFile(assetManager: AssetManager, filename: String, outFile: File): Boolean {
         var ins: InputStream? = null
         var out: OutputStream? = null

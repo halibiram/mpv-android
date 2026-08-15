@@ -23,6 +23,9 @@ object MPVLib {
 
     external fun command(cmd: Array<out String>)
 
+    @JvmName("commandVararg")
+    fun command(vararg args: String) = command(args)
+
     external fun setOptionString(name: String, value: String): Int
 
     external fun grabThumbnail(dimension: Int): Bitmap?
