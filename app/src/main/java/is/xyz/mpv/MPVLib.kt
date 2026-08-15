@@ -55,13 +55,19 @@ object MPVLib {
     @JvmStatic
     fun isDolbyVisionActive(): Boolean {
         val codec = getPropertyString("video-codec") ?: ""
+        val format = getPropertyString("video-format") ?: ""
         val gamma = getPropertyString("video-params/gamma") ?: ""
         val colorMatrix = getPropertyString("video-params/colormatrix") ?: ""
+        val decColorMatrix = getPropertyString("video-dec-params/colormatrix") ?: ""
         return codec.contains("dvhe", ignoreCase = true) ||
                codec.contains("dvh1", ignoreCase = true) ||
                codec.contains("dovi", ignoreCase = true) ||
+               format.contains("dovi", ignoreCase = true) ||
+               format.contains("dvhe", ignoreCase = true) ||
+               format.contains("dvh1", ignoreCase = true) ||
                colorMatrix.contains("dolby", ignoreCase = true) ||
-               (gamma.contains("pq", ignoreCase = true) && colorMatrix.contains("ipt", ignoreCase = true))
+               decColorMatrix.contains("dolby", ignoreCase = true) ||
+               (gamma.contains("pq", ignoreCase = true) && (colorMatrix.contains("ipt", ignoreCase = true) || decColorMatrix.contains("ipt", ignoreCase = true)))
     }
 
     @JvmStatic

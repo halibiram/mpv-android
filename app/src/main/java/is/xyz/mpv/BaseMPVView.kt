@@ -75,6 +75,7 @@ abstract class BaseMPVView @JvmOverloads constructor(
     fun setVo(vo: String) {
         voInUse = vo
         MPVLib.setOptionString("vo", vo)
+        runCatching { MPVLib.setPropertyString("vo", vo) }
     }
 
     // Surface callbacks
