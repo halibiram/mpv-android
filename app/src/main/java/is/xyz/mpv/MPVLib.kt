@@ -38,6 +38,48 @@ object MPVLib {
 
     external fun observeProperty(property: String, format: Int)
 
+    // NuvioTV Media Helpers
+    @JvmStatic
+    fun isHdrActive(): Boolean {
+        val gamma = getPropertyString("video-params/gamma") ?: ""
+        val primaries = getPropertyString("video-params/primaries") ?: ""
+        return gamma.contains("pq", ignoreCase = true) || 
+               gamma.contains("hlg", ignoreCase = true) ||
+               primaries.contains("bt.2020", ignoreCase = true) ||
+               primaries.contains("dci-p3", ignoreCase = true)
+    }
+
+    @JvmStatic
+    fun isDolbyVisionActive(): Boolean {
+        val codec = getPropertyString("video-codec") ?: ""
+        val gamma = getPropertyString("video-params/gamma") ?: ""
+        val colorMatrix = getPropertyString("video-params/colormatrix") ?: ""
+        return codec.contains("dvhe", ignoreCase = true) ||
+               codec.contains("dvh1", ignoreCase = true) ||
+               codec.contains("dovi", ignoreCase = true) ||
+               colorMatrix.contains("dolby", ignoreCase = true) ||
+               (gamma.contains("pq", ignoreCase = true) && colorMatrix.contains("ipt", ignoreCase = true))
+    }
+
+    @JvmStatic
+    fun setAudioPassthrough(enabled: Boolean, spdifCodecs: String = "ac3,eac3,dts,truehd,dts-hd") {
+        if (enabled) {
+            setPropertyString("audio-spdif", spdifCodecs)
+        } else {
+            setPropertyString("audio-spdif", "")
+        }
+    }
+
+    @JvmStatic
+    fun getCacheDuration(): Double {
+        return getPropertyDouble("demuxer-cache-duration") ?: 0.0
+    }
+
+    @JvmStatic
+    fun getDemuxerCacheState(): String? {
+        return getPropertyString("demuxer-cache-state")
+    }
+
     private val observers = mutableListOf<EventObserver>()
 
     @JvmStatic

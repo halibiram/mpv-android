@@ -97,17 +97,41 @@ internal class MPVView(context: Context, attrs: AttributeSet) : BaseMPVView(cont
         MPVLib.setOptionString("gpu-context", "android")
         MPVLib.setOptionString("opengl-es", "yes")
         MPVLib.setOptionString("hwdec", hwdec)
-        MPVLib.setOptionString("hwdec-codecs", "h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1")
+        MPVLib.setOptionString("hwdec-codecs", "h264,hevc,vp9,av1,mpeg2video,mpeg4,vc1,prores")
+
+        // Enable HDR and Dolby Vision color metadata signaling to Android Display
+        MPVLib.setOptionString("target-colorspace-hint", "yes")
+        MPVLib.setOptionString("tone-mapping", "auto")
+
+        // Audio configuration & multichannel passthrough
         MPVLib.setOptionString("ao", "audiotrack,opensles")
         MPVLib.setOptionString("audio-set-media-role", "yes")
+        MPVLib.setOptionString("audio-pitch-correction", "yes")
+
         MPVLib.setOptionString("tls-verify", "yes")
         MPVLib.setOptionString("tls-ca-file", "${this.context.filesDir.path}/cacert.pem")
         MPVLib.setOptionString("input-default-bindings", "yes")
-        // Limit demuxer cache since the defaults are too high for mobile devices
-        val cacheMegs = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) 64 else 32
-        MPVLib.setOptionString("demuxer-max-bytes", "${cacheMegs * 1024 * 1024}")
-        MPVLib.setOptionString("demuxer-max-back-bytes", "${cacheMegs * 1024 * 1024}")
-        //
+
+        // Subtitle rendering quality & anime/movie ASS compatibility
+        MPVLib.setOptionString("blend-subtitles", "yes")
+        MPVLib.setOptionString("sub-ass-vsfilter-blur-compat", "yes")
+        MPVLib.setOptionString("sub-ass-override", "no")
+
+        // Dynamic buffer & cache allocation based on device memory
+        val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? android.app.ActivityManager
+        val memoryClass = activityManager?.memoryClass ?: 128
+        val cacheMegs = when {
+            memoryClass >= 384 -> 200 // High-end TV / Box (3GB-4GB+ RAM)
+            memoryClass >= 192 -> 128 // Standard TV (2GB RAM)
+            else -> 64 // Budget Stick (1GB RAM)
+        }
+        val cacheBytes = cacheMegs * 1024 * 1024
+        MPVLib.setOptionString("cache", "yes")
+        MPVLib.setOptionString("demuxer-max-bytes", "$cacheBytes")
+        MPVLib.setOptionString("demuxer-max-back-bytes", "${(cacheBytes / 3)}")
+        MPVLib.setOptionString("demuxer-readahead-secs", "30")
+        MPVLib.setOptionString("force-seekable", "yes")
+
         val screenshotDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
         screenshotDir.mkdirs()
         MPVLib.setOptionString("screenshot-directory", screenshotDir.path)
