@@ -21,7 +21,7 @@ fi
 if [ ! -d ffmpeg ]; then
 	args=()
 	[ $IN_CI -eq 1 ] && args+=(--depth=1)
-	git clone -b "$v_ci_ffmpeg" https://github.com/halibiram/FFmpeg.git ffmpeg "${args[@]}"
+	git clone -b dovi-mediacodec https://github.com/halibiram/FFmpeg.git ffmpeg "${args[@]}"
 fi
 
 # freetype2
