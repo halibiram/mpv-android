@@ -43,7 +43,7 @@ args=(
 	--enable-decoder=h264,hevc,vp9,av1,mpeg2video,mpeg4,vc1,flv1,mjpeg,theora,prores
 	--enable-decoder=aac,ac3,eac3,truehd,dca,flac,opus,vorbis,mp3,alac,pcm_s16le,pcm_s24le,pcm_s32le,pcm_bluray
 	--enable-parser=h264,hevc,vp9,av1,dovi,aac,ac3,eac3,dca,flac,mjpeg,opus
-	--enable-bsf=hevc_mp4toannexb,h264_mp4toannexb,null,dca_core,eac3_core,truehd_core
+	--enable-bsf=hevc_mp4toannexb,h264_mp4toannexb,null,dca_core,eac3_core,truehd_core,dovi_rpu
 )
 ../configure "${args[@]}"
 
