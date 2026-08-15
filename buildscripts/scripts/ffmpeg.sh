@@ -11,16 +11,6 @@ else
 	exit 255
 fi
 
-# Apply custom patches to FFmpeg source if present
-patch_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.."; pwd)/patches/ffmpeg"
-if [ -d "$patch_dir" ]; then
-	for patch in "$patch_dir"/*.patch; do
-		if [ -f "$patch" ]; then
-			git apply --check "$patch" 2>/dev/null && git apply "$patch" || true
-		fi
-	done
-fi
-
 mkdir -p _build$ndk_suffix
 cd _build$ndk_suffix
 

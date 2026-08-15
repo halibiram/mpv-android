@@ -17,11 +17,11 @@ fi
 # dav1d
 [ ! -d dav1d ] && git clone https://github.com/videolan/dav1d
 
-# ffmpeg
+# ffmpeg (halibiram/FFmpeg with native Dolby Vision MediaCodec support)
 if [ ! -d ffmpeg ]; then
 	args=()
-	[ $IN_CI -eq 1 ] && args+=(--depth=1 -b "$v_ci_ffmpeg")
-	git clone https://github.com/FFmpeg/FFmpeg ffmpeg "${args[@]}"
+	[ $IN_CI -eq 1 ] && args+=(--depth=1)
+	git clone -b "$v_ci_ffmpeg" https://github.com/halibiram/FFmpeg.git ffmpeg "${args[@]}"
 fi
 
 # freetype2
