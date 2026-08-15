@@ -1,0 +1,135 @@
+diff --git a/libavcodec/mediacodecdec.c b/libavcodec/mediacodecdec.c
+index 1111111..2222222 100644
+--- a/libavcodec/mediacodecdec.c
++++ b/libavcodec/mediacodecdec.c
+@@ -37,6 +37,7 @@ static const AVOption ff_mediacodec_dec_options[] = {
+ #if CONFIG_MEDIACODEC_NDK
+     { "ndk_codec", "Use NDK MediaCodec API", OFFSET(ndk_codec), AV_OPT_TYPE_BOOL, {.i64 = 0}, 0, 1, VD },
+ #endif
++    { "codec_name", "Codec name to use for MediaCodec", OFFSET(codec_name), AV_OPT_TYPE_STRING, {.str = NULL}, 0, 0, VD },
+     { NULL }
+ };
+ 
+diff --git a/libavcodec/mediacodecdec_common.c b/libavcodec/mediacodecdec_common.c
+index 3333333..4444444 100644
+--- a/libavcodec/mediacodecdec_common.c
++++ b/libavcodec/mediacodecdec_common.c
+@@ -29,6 +29,8 @@
+ #include "libavutil/mem.h"
+ #include "libavutil/opt.h"
+ #include "libavutil/time.h"
++#include "libavutil/dovi_meta.h"
++#include "libavutil/intreadwrite.h"
+ 
+ #include "avcodec.h"
+ #include "decode.h"
+@@ -628,6 +630,22 @@ int ff_mediacodec_dec_init(AVCodecContext *avctx, MediaCodecDecContext *s,
+     int ret = 0;
+     int status;
+     int is_ndk = 0;
++    const char *target_mime = mime;
++
++    /* Auto-detect Dolby Vision streams and prefer video/dolby-vision MIME */
++    if (avctx->codec_id == AV_CODEC_ID_HEVC) {
++        int is_dovi = (avctx->codec_tag == MKTAG('d','v','h','e') ||
++                       avctx->codec_tag == MKTAG('d','v','h','1') ||
++                       avctx->codec_tag == MKTAG('d','v','a','1') ||
++                       avctx->codec_tag == MKTAG('d','a','v','1'));
++        if (!is_dovi && av_packet_side_data_get(avctx->coded_side_data, avctx->nb_coded_side_data, AV_PKT_DATA_DOVI_CONF)) {
++            is_dovi = 1;
++        }
++        if (is_dovi) {
++            av_log(avctx, AV_LOG_INFO, "Dolby Vision stream detected, trying video/dolby-vision decoder\n");
++            target_mime = "video/dolby-vision";
++        }
++    }
+ 
+ #if CONFIG_MEDIACODEC_NDK
+     if (s->ndk_codec) {
+@@ -639,7 +657,17 @@ int ff_mediacodec_dec_init(AVCodecContext *avctx, MediaCodecDecContext *s,
+     }
+ #endif
+ 
+-    s->codec = ff_AMediaCodec_createDecoderByType(mime);
++    if (s->codec_name && s->codec_name[0]) {
++        av_log(avctx, AV_LOG_INFO, "Creating MediaCodec by name: %s\n", s->codec_name);
++        s->codec = ff_AMediaCodec_createCodecByName(s->codec_name);
++    }
++    if (!s->codec && target_mime != mime) {
++        s->codec = ff_AMediaCodec_createDecoderByType(target_mime);
++    }
++    if (!s->codec) {
++        s->codec = ff_AMediaCodec_createDecoderByType(mime);
++    }
++
+     if (!s->codec) {
+         av_log(avctx, AV_LOG_ERROR, "Failed to create media decoder for type %s\n", mime);
+         return AVERROR_EXTERNAL;
+diff --git a/libavcodec/mediacodecdec_common.h b/libavcodec/mediacodecdec_common.h
+index 5555555..6666666 100644
+--- a/libavcodec/mediacodecdec_common.h
++++ b/libavcodec/mediacodecdec_common.h
+@@ -48,6 +48,7 @@ typedef struct MediaCodecDecContext {
+ 
+     int delay_flush;
+     int ndk_codec;
++    char *codec_name;
+ 
+     atomic_int refcount;
+ 
+diff --git a/libavcodec/mediacodec_wrapper.c b/libavcodec/mediacodec_wrapper.c
+index 7777777..8888888 100644
+--- a/libavcodec/mediacodec_wrapper.c
++++ b/libavcodec/mediacodec_wrapper.c
+@@ -1435,6 +1435,39 @@ FFAMediaCodec* ff_AMediaCodec_createDecoderByType(const char *mime)
+     return ff_AMediaCodec_createDecoderByType_jni(mime);
+ }
+ 
++FFAMediaCodec* ff_AMediaCodec_createCodecByName(const char *name)
++{
++    FFAMediaCodec *codec = NULL;
++    JNIEnv *env = NULL;
++    jstring name_jstr = NULL;
++    jobject media_codec = NULL;
++
++    if (!name) return NULL;
++
++    env = ff_jni_get_env(NULL);
++    if (!env) return NULL;
++
++    name_jstr = ff_jni_utf_chars_to_jstring(env, name, NULL);
++    if (!name_jstr) return NULL;
++
++    media_codec = (*env)->CallStaticObjectMethod(env,
++                                                 j_mediacodec_class.mediacodec_class,
++                                                 j_mediacodec_class.create_by_codec_name_id,
++                                                 name_jstr);
++    if (ff_jni_exception_check(env, 1, NULL) < 0 || !media_codec) {
++        (*env)->DeleteLocalRef(env, name_jstr);
++        return NULL;
++    }
++    (*env)->DeleteLocalRef(env, name_jstr);
++
++    codec = av_mallocz(sizeof(FFAMediaCodec));
++    if (!codec) return NULL;
++    codec->object = (*env)->NewGlobalRef(env, media_codec);
++    (*env)->DeleteLocalRef(env, media_codec);
++    codec->jfields = &j_mediacodec_class;
++    return codec;
++}
++
+ int ff_AMediaCodec_delete(FFAMediaCodec* codec)
+ {
+     int ret = 0;
+diff --git a/libavcodec/mediacodec_wrapper.h b/libavcodec/mediacodec_wrapper.h
+index 9999999..aaaaaaa 100644
+--- a/libavcodec/mediacodec_wrapper.h
++++ b/libavcodec/mediacodec_wrapper.h
+@@ -107,6 +107,7 @@ struct FFAMediaCodec {
+ };
+ 
+ FFAMediaCodec* ff_AMediaCodec_createDecoderByType(const char *mime);
++FFAMediaCodec* ff_AMediaCodec_createCodecByName(const char *name);
+ 
+ int ff_AMediaCodec_delete(FFAMediaCodec* codec);
+ 
