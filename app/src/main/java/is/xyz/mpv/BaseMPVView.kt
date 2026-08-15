@@ -36,8 +36,6 @@ abstract class BaseMPVView @JvmOverloads constructor(
         // need to idle at least once for playFile() logic to work
         MPVLib.setOptionString("idle", "once")
 
-        // Configure 10-bit / wide-gamut pixel format for HDR and Dolby Vision panels
-        holder.setFormat(android.graphics.PixelFormat.RGBA_8888)
         holder.addCallback(this)
         observeProperties()
     }
