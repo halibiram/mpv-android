@@ -93,11 +93,15 @@ jobs:
           chmod +x ./gradlew
           ./gradlew compileDefaultReleaseKotlin || ./gradlew compileDefaultDebugKotlin
           
-          mkdir -p /tmp/classes
-          find app/build -name "*.class" -exec cp --parents {} /tmp/classes/ \; || true
-          
-          # Create classes.jar
-          cd app/build/tmp/kotlin-classes/* || cd app/build/intermediates/javac/*
+          # Create clean classes.jar with only core player engine classes
+          mkdir -p /tmp/clean_classes/is/xyz/mpv
+          CLASS_DIR=$(find app/build -type d -path "*/compileDefault*Kotlin/classes/is/xyz/mpv" | head -n 1)
+          if [ -n "$CLASS_DIR" ]; then
+            for pat in "BaseMPVView*.class" "MPVView*.class" "MPVLib*.class" "NuvioMPVConfig*.class" "Utils*.class" "KeyMapping*.class" "TouchGestures*.class" "PropertyChange*.class"; do
+              cp $CLASS_DIR/$pat /tmp/clean_classes/is/xyz/mpv/ 2>/dev/null || true
+            done
+          fi
+          cd /tmp/clean_classes
           jar -cf "$GITHUB_WORKSPACE/staging/classes.jar" .
           cd "$GITHUB_WORKSPACE"
           
