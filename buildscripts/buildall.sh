@@ -41,6 +41,7 @@ loadarch () {
 	unset CC CXX CPATH LIBRARY_PATH C_INCLUDE_PATH CPLUS_INCLUDE_PATH
 	unset CFLAGS CXXFLAGS CPPFLAGS LDFLAGS
 	unset PKG_CONFIG_PATH
+	unset ARCH TARGET_ARCH
 
 	local apilvl=23
 	# ndk_triple: the target triple

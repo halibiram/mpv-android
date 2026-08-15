@@ -12,6 +12,7 @@ else
 fi
 
 # Building separately from source tree is not supported, this means we are forced to always clean
+unset ARCH TARGET_ARCH
 $0 clean
 
 mycflags=(
@@ -25,7 +26,7 @@ mycflags=(
 
 # LUA_T= and LUAC_T= to disable building lua & luac
 # -Dgetlocaledecpoint()=('.') fixes bionic missing decimal_point in localeconv
-make CC="$CC" AR="$AR rc" RANLIB="$RANLIB" \
+make TARGET_ARCH= CC="$CC" AR="$AR rc" RANLIB="$RANLIB" \
 	MYCFLAGS="${mycflags[*]}" \
 	PLAT=linux LUA_T= LUAC_T= -j$cores
 
