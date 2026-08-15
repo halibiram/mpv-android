@@ -78,7 +78,7 @@ fi
 # curl
 if [ ! -d curl ]; then
 	mkdir curl
-	$WGET https://curl.se/download/curl-$v_curl.tar.gz -O - | \
+	$WGET https://github.com/curl/curl/releases/download/curl-${v_curl//./_}/curl-$v_curl.tar.gz -O - | \
 		tar -xz -C curl --strip-components=1
 fi
 

@@ -13,7 +13,7 @@ if [ "$os" == "linux" ]; then
 			sudo yum install autoconf pkgconfig libtool ninja-build \
 				unzip wget meson gperf
 		elif apt-get -v &>/dev/null; then
-			sudo apt-get install autoconf pkg-config libtool ninja-build \
+			sudo apt-get install -y autoconf pkg-config libtool ninja-build \
 				unzip wget meson gperf
 		else
 			echo "Note: dependencies were not installed, you have to do that manually."
@@ -53,7 +53,7 @@ if [ ! -d "android-sdk-${os}" ]; then
 	echo "Android SDK not found. Downloading commandline tools."
 	$WGET "https://dl.google.com/android/repository/commandlinetools-${os}-${v_sdk}.zip"
 	mkdir "android-sdk-${os}"
-	unzip -q -d "android-sdk-${os}" "commandlinetools-${os}-${v_sdk}.zip"
+	unzip -q -o -d "android-sdk-${os}" "commandlinetools-${os}-${v_sdk}.zip"
 	rm "commandlinetools-${os}-${v_sdk}.zip"
 fi
 sdkmanager () {
@@ -78,7 +78,7 @@ elif [ -z "${os_ndk}" ]; then
 else
 	echo "Downloading NDK."
 	$WGET "http://dl.google.com/android/repository/android-ndk-${v_ndk}-${os_ndk}.zip"
-	unzip -q "android-ndk-${v_ndk}-${os_ndk}.zip"
+	unzip -q -o "android-ndk-${v_ndk}-${os_ndk}.zip"
 	rm "android-ndk-${v_ndk}-${os_ndk}.zip"
 fi
 if ! grep -qF "${v_ndk_n}" "android-ndk-${v_ndk}/source.properties"; then
