@@ -10,3 +10,6 @@ obj
 build/
 local.properties
 *~
+build_artifacts/
+artifacts/
+aar_staging/
